@@ -1,0 +1,199 @@
+---
+title: "pisco playtime"
+author: "me"
+date: "2024-07-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+
+#install.packages("usethis")
+library(usethis)
+library(readr)
+library(lubridate)
+library(dplyr)
+library(plyr)
+library(reshape2)
+library(ggplot2)
+library(vegan)
+library(scales)
+library(viridis)
+library(ggthemes)
+library(tidyr)
+library(cowplot)
+library(wesanderson)
+library(RColorBrewer)
+```
+
+```{r}
+rm(list=ls())
+
+setwd("/Users/kylienewcomer/Desktop/Senior Thesis")
+
+swath <- read.csv("MLPA_swath_site_means.csv")
+
+
+```
+
+```{r}
+swath <- subset(swath, campus == "UCSB")
+clean_swath <- swath[c(3,4,7,8,108,167)]
+
+cleaned_swath <- clean_swath %>%
+  dplyr:: rename(MESFRA_AD = "den_MESFRAAD",
+                 STRPUR_AD = "den_STRPURAD",
+                 year = "survey_year")
+
+```
+
+
+```{r}
+cleaned_swath <- subset(cleaned_swath, site_status == "mpa" | site_status == "reference")
+```
+
+```{r}
+cleaned_swath$island <- substr(cleaned_swath$site, 1,3)
+```
+
+```{r}
+ana_sci <- subset(cleaned_swath, island == "SCI" | island == "ANA")
+```
+
+```{r}
+ana_sci <- subset(ana_sci, site != "ANACAPA_ADMIRALS_E" & site != "ANACAPA_ADMIRALS_W" & site != "ANACAPA_ADMIRALS_CEN" & site != "SCI_POTATO_PASTURE_E" & site != "SCI_SCORPION_ANCHORAGE" & site != "SCI_LITTLE_SCORPION_E" & site != "SCI_GULL_ISLE_W" 
+& site != "SCI_GULL_ISLE_E" & site != "SCI_FORNEY_E" & site != "SCI_FORNEY_W")
+```
+
+
+```{r}
+urch_summed <- ddply(ana_sci, .(year, mpa_group, site_status, MESFRA_AD, STRPUR_AD), summarise,
+                      all_redurch = sum(MESFRA_AD),  
+                      all_purpurch = sum(STRPUR_AD))
+urch_mean <- ddply(urch_summed, .(year, mpa_group), summarise,
+                   mean_redurch = mean(all_redurch),
+                   mean_purpurch = mean(all_purpurch))
+
+```
+
+
+
+```{r}
+urch <- subset(urch_mean, year >= 2005 & year != 2013)
+```
+
+
+```{r}
+ggplot(urch, aes(x = year, y = mean_redurch, fill = mpa_group)) +
+    geom_bar(position = "stack", stat="identity") +
+    theme(axis.text.x = element_text(size=12), 
+        axis.text.y = element_text(size=12),
+        axis.title = element_text(size=14),
+        title = element_text(size=18)) +
+  ggtitle("Red Urchin Density") + xlab("Year") + 
+    ylab("Red Urchin Density") +
+    facet_wrap(~mpa_group)
+
+```
+
+```{r}
+ggplot(urch, aes(x = year, y = mean_redurch, color = mpa_group)) +
+    geom_point() +
+    geom_line() +
+     theme(
+      axis.text.x = element_text(size=12), 
+      axis.text.y = element_text(size=12),
+      axis.title = element_text(size=14),
+      title = element_text(size=18)) +
+     facet_wrap(~mpa_group, scales = "free") +
+      ggtitle("Red Urchin Density") + xlab("Year") + 
+      ylab("Red Urchin Density")
+```
+
+```{r}
+ggplot(urch, aes(x = year, y = mean_purpurch, fill = mpa_group)) +
+    geom_bar(position = "stack", stat="identity") +
+     theme(legend.position = "none",
+      axis.text.x = element_text(size=12), 
+      axis.text.y = element_text(size=12),
+      axis.title = element_text(size=14),
+      title = element_text(size=18)) +
+     facet_wrap(~mpa_group, scales = "free") +
+      ggtitle("Purple Urchin Density") + xlab("Year") + 
+      ylab("Purple Urchin Density")
+```
+```{r}
+ggplot(urch, aes(x = year, y = mean_purpurch, color = mpa_group)) +
+    geom_point() +
+    geom_line() +
+     theme(
+      axis.text.x = element_text(size=12), 
+      axis.text.y = element_text(size=12),
+      axis.title = element_text(size=14),
+      title = element_text(size=18)) +
+     facet_wrap(~mpa_group, scales = "free") +
+      ggtitle("Purple Urchin Density") + xlab("Year") + 
+      ylab("Purple Urchin Density")
+```
+### UPC
+
+```{r}
+upc <- read.csv("MLPA_upc_site_means.csv")
+```
+
+```{r}
+upc <- subset(upc, campus == "UCSB")
+clean_upc <- upc[c(3,4,23)]
+
+cleaned_upc <- clean_upc %>%
+  dplyr:: rename(dictales = "COVER_DICTYOTALES",
+                 year = "survey_year")
+
+```
+
+```{r}
+cleaned_upc$island <- substr(cleaned_upc$site, 1,3)
+```
+
+```{r}
+better_upc <- subset(cleaned_upc, island == "SCI" | island == "ANA")
+```
+
+```{r}
+upc_fig <- subset(better_upc, site != "ANACAPA_ADMIRALS_E" & site != "ANACAPA_ADMIRALS_W" & site != "ANACAPA_ADMIRALS_CEN" & site != "SCI_POTATO_PASTURE_E" & site != "SCI_POTATO_PASTURE_W" & site != "SCI_SCORPION_ANCHORAGE" & site != "SCI_LITTLE_SCORPION_E" & site != "SCI_GULL_ISLE_W" & site != "SCI_GULL_ISLE_E" & site != "SCI_FORNEY_E" & site != "SCI_FORNEY_W")
+
+```
+
+```{r}
+ggplot(upc_fig, aes(x = year, y = dictales, fill = island)) +
+    geom_bar(position = "stack", stat="identity") +
+    theme(axis.text.x = element_text(size=12), 
+        axis.text.y = element_text(size=12),
+        axis.title = element_text(size=14),
+        title = element_text(size=18)) +
+        facet_wrap(~island, scales = "free")
+  #ggtitle("Red Urchin Density") + xlab("Year") + 
+    #ylab("Red Urchin Density")
+```
+```{r}
+dicsum <- ddply(upc_fig, .(year, dictales, island), summarise,
+                      all_dictales = sum(dictales),  
+                      mean_dictales = mean(dictales))
+```
+
+
+```{r}
+ggplot(dicsum, aes(x = year, y = mean_dictales, color = island)) +
+    geom_point() +
+    geom_line() +
+    theme(axis.text.x = element_text(size=12), 
+        axis.text.y = element_text(size=12),
+        axis.title = element_text(size=14),
+        title = element_text(size=18)) +
+        facet_wrap(~island, scales = "free")
+```
+
